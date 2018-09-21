@@ -19,21 +19,37 @@ LineProcessExitStatus LineProcess::Process(string commandString) {
     if (commandTokens[0] == "accountlist") {
         vector<string> accountList = Commands::GetEmailAccounts();
         for (string account : accountList) {
-            cout << account << endl;
+            cout << "  " << account << endl;
         }
         return LineProcessExitStatus::LineProcessStatus_OK;
     }
 
+    if (commandTokens[0] == "accountinfo") {
+        map<string, string> info;
+        if (numTokens != 2) {
+            cout << "  Usage: accountinfo emailaddress@domain.com" << endl;
+            return LineProcessExitStatus::LineProcessStatus_MISUNDERSTOOD;
+        }
+        if (Commands::GetAccountInfo(commandTokens[1], info)) {
+            for (map<string, string>::const_iterator it = info.begin(); it != info.end(); ++it) {
+                cout << "  " << it->first << " = \"" << it->second << "\"" << endl;
+            }
+            return LineProcessExitStatus::LineProcessStatus_OK;
+        } else {
+            return LineProcessExitStatus::LineProcessStatus_FAIL;
+        }
+    }
+
     if (commandTokens[0] == "accountdelete") {
         if (numTokens != 2) {
-            cout << "Usage: accountdelete emailaddress@domain.com" << endl;
+            cout << "  Usage: accountdelete emailaddress@domain.com" << endl;
             return LineProcessExitStatus::LineProcessStatus_MISUNDERSTOOD;
         }
         if (Commands::DeleteAccount(commandTokens[1])) {
-            cout << commandTokens[1] << " removed." << endl;
+            cout << "  " << commandTokens[1] << " removed." << endl;
             return LineProcessExitStatus::LineProcessStatus_OK;
         } else {
-            cout << "Could not remove " << commandTokens[1] << endl;
+            cout << "  Could not remove " << commandTokens[1] << endl;
             return LineProcessExitStatus::LineProcessStatus_FAIL;
         }
     }
@@ -41,7 +57,7 @@ LineProcessExitStatus LineProcess::Process(string commandString) {
     // check if a password term is provided
     if (commandTokens[0] == "accountadd") {
         if (numTokens < 5) {
-            cout << "Usage: accountadd email=\"address\" password=\"password\" realname=\"name\" linkedemail=\"address\"" << endl;
+            cout << "  Usage: accountadd email=\"address\" password=\"password\" realname=\"name\" linkedemail=\"address\"" << endl;
             return LineProcessExitStatus::LineProcessStatus_MISUNDERSTOOD;
         }
         map<string, string> newAccountTerms;
@@ -55,7 +71,7 @@ LineProcessExitStatus LineProcess::Process(string commandString) {
         for (map<string, string>::iterator it = newAccountTerms.begin(); it != newAccountTerms.end(); ++it) {
             if (it->second.length() == 0) {
                 meetsLengthReq = false;
-                cout << "Term " << it->first << " is empty!" << endl;
+                cout << "  Term " << it->first << " is empty!" << endl;
             }
         }
 
@@ -66,14 +82,14 @@ LineProcessExitStatus LineProcess::Process(string commandString) {
                     newAccountTerms["realname"],
                     newAccountTerms["linkedemail"]);
             if (addaccount_result) {
-                cout << newAccountTerms["email"] << " added successfully." << endl;
+                cout << "  " << newAccountTerms["email"] << " added successfully." << endl;
                 return LineProcessExitStatus::LineProcessStatus_OK;
             } else {
-                cout << newAccountTerms["email"] << " could NOT be added." << endl;
+                cout << "  " << newAccountTerms["email"] << " could NOT be added." << endl;
                 return LineProcessExitStatus::LineProcessStatus_FAIL;
             }
         } else {
-            cout << "accountadd action DID NOT meet requirements!" << endl;
+            cout << "  " << "action DID NOT meet requirements!" << endl;
             return LineProcessExitStatus::LineProcessStatus_FAIL;
         }
     }
@@ -83,7 +99,7 @@ LineProcessExitStatus LineProcess::Process(string commandString) {
     }
 
     // If we get here the command was not understood
-    cout << "Command not understood" << endl;
+    cout << "  " << "Command not understood" << endl;
 
     return LineProcessExitStatus::LineProcessStatus_MISUNDERSTOOD;
 }

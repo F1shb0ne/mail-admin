@@ -19,8 +19,10 @@ int main(int argc, char** argv) {
 
     Session::Init();
 
-    while (running) {
-        getline(cin, commandString);
+    while (running && getline(cin, commandString)) {
+        if (commandString.length() == 0) {
+            continue;
+        }
         LineProcessExitStatus status = LineProcess::Process(commandString);
         switch (status) {
             case LineProcessExitStatus::LineProcessStatus_OK:

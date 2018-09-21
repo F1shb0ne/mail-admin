@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <map>
 #include <sstream>
 #include <regex>
 #include <pqxx/pqxx>
@@ -114,4 +115,43 @@ vector<string> Commands::GetEmailAccounts() {
     }
 
     return accounts;
+}
+
+bool Commands::GetAccountInfo(string email, map<string, string>& info) {
+    stringstream ss;
+    //(email, password, realname, maildir, linkedemail)
+    ss << "select realname, password, maildir, linkedemail from users where email ='";
+    ss << email;
+    ss << "'";
+    string sql_query = ss.str();
+
+    if (Session::IsValid()) {
+        try {
+            pqxx::connection* conn = Session::GetConnection();
+            pqxx::nontransaction ntrans(*conn);
+
+            pqxx::result result;
+            result = ntrans.exec(sql_query);
+            if (result.size() == 1) {
+                // Can only be one record with email address as primary key.
+                pqxx::result::const_iterator record = result.begin();
+                info["realname"] = record[0].as<string>();
+                info["passwordhash"] = record[1].as<string>();
+                info["maildir"] = record[2].as<string>();
+                info["linkedemail"] = record[3].as<string>();
+                return true;
+            } else if (result.size() > 1) {
+                cout << "Multiple accounts found! wtf?" << endl;
+                return false;
+            } else {
+                cout << "Account not found." << endl;
+                return false;
+            }
+        } catch (const exception &e) {
+            cout << e.what() << endl;
+        }
+    } else {
+        cout << "Invalid configuration" << endl;
+    }
+    return false;
 }
